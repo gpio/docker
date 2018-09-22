@@ -2,12 +2,12 @@ version: "2"
 services:
   mosquitto:
     restart: always
-    image: eclipse-mosquitto:latest
+    image: toke/mosquitto:latest
     container_name: mosquitto
     volumes:
-      # mkdir mosquitto
-      - /share/CACHEDEV1_DATA/docker/mosquitto:/etc/mosquitto:ro
-      - /share/CACHEDEV1_DATA/docker/mosquitto:/var/log/mosquitto:rw
+      - /share/CACHEDEV1_DATA/docker/mqtt/config:/mqtt/config
+      - /share/CACHEDEV1_DATA/docker/mqtt/data:/mqtt/data
+      - /share/CACHEDEV1_DATA/docker/mqtt/log:/mqtt/log
     ports:
       - "1883:1883"
       - "9001:9001"
@@ -15,6 +15,8 @@ services:
   node-red:
     image: nodered/node-red-docker:latest
     container_name: node-red
+    links:
+      - mosquitto
     volumes:
       # mkdir node-red/data
       - /share/CACHEDEV1_DATA/docker/node-red:/data
@@ -27,13 +29,11 @@ services:
     container_name: influxdb
     ports:
       - "8083:8083"
-      - "8087:8086"
+      - "8086:8086"
       - "8090:8090"
     #env_file:
       #- 'env.influxdb'
     volumes:
-      # Data persistency
-      # sudo mkdir -p /srv/docker/influxdb/data
       - /share/CACHEDEV1_DATA/docker/influxdb/data:/var/lib/influxdb
 
   telegraf:
@@ -56,8 +56,6 @@ services:
     links:
       - influxdb
     volumes:
-      # Data persistency
-      # sudo mkdir -p /srv/docker/grafana/data; chown 472:472 /srv/docker/grafana/data
     - /share/CACHEDEV1_DATA/docker/grafana/data:/var/lib/grafana
 
   gogs:
