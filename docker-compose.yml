@@ -1,0 +1,84 @@
+version: "2"
+services:
+  mosquitto:
+    restart: always
+    image: eclipse-mosquitto:latest
+    volumes:
+      # mkdir mosquitto
+      - /share/CACHEDEV1_DATA/docker/mosquitto:/etc/mosquitto:ro
+      - /share/CACHEDEV1_DATA/docker/mosquitto:/var/log/mosquitto:rw
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+
+  node-red:
+    image: nodered/node-red-docker:latest
+    volumes:
+      # mkdir node-red/data
+      - /share/CACHEDEV1_DATA/docker/node-red:/data
+    ports:
+      - "1880:1880"
+
+  influxdb:
+    restart: always
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "8083:8083"
+      - "8087:8086"
+      - "8090:8090"
+    #env_file:
+      #- 'env.influxdb'
+    volumes:
+      # Data persistency
+      # sudo mkdir -p /srv/docker/influxdb/data
+      - /share/CACHEDEV1_DATA/docker/influxdb/data:/var/lib/influxdb
+
+  telegraf:
+    restart: always
+    image: telegraf:latest
+    container_name: telegraf
+    links:
+      - influxdb
+    volumes:
+      - /share/CACHEDEV1_DATA/docker/telegraf:/etc/telegraf
+
+  grafana:
+    restart: always
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_INSTALL_PLUGINS: 'grafana-clock-panel,briangann-gauge-panel,natel-plotly-panel,grafana-simple-json-datasource'
+    links:
+      - influxdb
+    volumes:
+      # Data persistency
+      # sudo mkdir -p /srv/docker/grafana/data; chown 472:472 /srv/docker/grafana/data
+    - /share/CACHEDEV1_DATA/docker/grafana/data:/var/lib/grafana
+
+  gogs:
+    restart: always
+    image: gogs/gogs:latest
+    ports:
+      - "4022:22"
+      - "4000:3000"
+    volumes:
+      - /share/CACHEDEV1_DATA/docker/gogs:/data
+    environment:
+      USERMAP_UID: 501
+      USERMAP_GID: 501
+      GOGS_APP_NAME: 'Dépots Git'
+      GOGS_OFFLINE_MODE: 'true'
+      GOGS_DOMAIN: 'gpio.fr'
+      GOGS_ROOT_URL: 'http://127.0.0.1:4000/'
+      
+      #GOGS_MAIL_ENABLED: 'true'
+      #GOGS_MAIL_HOST: 'smtp.example.com:25'
+      #GOGS_MAIL_FROM: '"GOGS" <noreply@example.com>'
+      #GOGS_MAIL_SKIP_VERIFY: 'true'
+
+
+
+
