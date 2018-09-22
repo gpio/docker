@@ -3,6 +3,7 @@ services:
   mosquitto:
     restart: always
     image: eclipse-mosquitto:latest
+    container_name: mosquitto
     volumes:
       # mkdir mosquitto
       - /share/CACHEDEV1_DATA/docker/mosquitto:/etc/mosquitto:ro
@@ -13,6 +14,7 @@ services:
 
   node-red:
     image: nodered/node-red-docker:latest
+    container_name: node-red
     volumes:
       # mkdir node-red/data
       - /share/CACHEDEV1_DATA/docker/node-red:/data
@@ -61,6 +63,7 @@ services:
   gogs:
     restart: always
     image: gogs/gogs:latest
+    container_name: git
     ports:
       - "4022:22"
       - "4000:3000"
