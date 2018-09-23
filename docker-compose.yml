@@ -1,8 +1,8 @@
-version: "2"
+version: "3"
 services:
   mosquitto:
     restart: always
-    image: toke/mosquitto:latest
+    image: eclipse-mosquitto:latest
     container_name: mosquitto
     volumes:
       - /share/CACHEDEV1_DATA/docker/mqtt/config:/mqtt/config
@@ -22,6 +22,9 @@ services:
       - /share/CACHEDEV1_DATA/docker/node-red:/data
     ports:
       - "1880:1880"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+
 
   influxdb:
     restart: always
