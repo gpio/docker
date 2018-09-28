@@ -1,29 +1,45 @@
 version: "3"
 services:
+  web:
+    restart: always
+    image: nginx:alpine
+    container_name: web
+    volumes:
+     - ${SERV_ROOT}/web:/etc/nginx/conf.d
+     - ${SERV_ROOT}/web/www:/var/www
+    ports:
+     - "80:80"
+    links:
+      - grafana
+      - node-red
+      - git
+
+
   mosquitto:
     restart: always
     image: eclipse-mosquitto:latest
     container_name: mosquitto
     volumes:
-      - /share/CACHEDEV1_DATA/docker/mqtt/config:/mqtt/config
-      - /share/CACHEDEV1_DATA/docker/mqtt/data:/mqtt/data
-      - /share/CACHEDEV1_DATA/docker/mqtt/log:/mqtt/log
+      - ${SERV_ROOT}/mqtt/config:/mqtt/config
+      - ${SERV_ROOT}/mqtt/data:/mqtt/data
+      - ${SERV_ROOT}/mqtt/log:/mqtt/log
     ports:
       - "1883:1883"
       - "9001:9001"
 
   node-red:
+    restart: always
     image: nodered/node-red-docker:latest
     container_name: node-red
     links:
       - mosquitto
     volumes:
       # mkdir node-red/data
-      - /share/CACHEDEV1_DATA/docker/node-red:/data
+      - ${SERV_ROOT}/node-red:/data
     ports:
       - "1880:1880"
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
+        #devices:
+    #  - "/dev/ttyUSB0:/dev/ttyUSB0"
 
 
   influxdb:
@@ -34,10 +50,10 @@ services:
       - "8083:8083"
       - "8086:8086"
       - "8090:8090"
-    #env_file:
+    #environment_file:
       #- 'env.influxdb'
     volumes:
-      - /share/CACHEDEV1_DATA/docker/influxdb/data:/var/lib/influxdb
+      - ${SERV_ROOT}/influxdb/data:/var/lib/influxdb
 
   telegraf:
     restart: always
@@ -46,37 +62,39 @@ services:
     links:
       - influxdb
     volumes:
-      - /share/CACHEDEV1_DATA/docker/telegraf:/etc/telegraf
+      - ${SERV_ROOT}/telegraf:/etc/telegraf
 
   grafana:
     restart: always
     image: grafana/grafana:latest
     container_name: grafana
-    ports:
-      - "3000:3000"
+    #ports:
+      # - "3000:3000"
     environment:
+      GF_SERVER_ROOT_URL: 'http://192.168.1.2/grafana/' 
       GF_INSTALL_PLUGINS: 'grafana-clock-panel,briangann-gauge-panel,natel-plotly-panel,grafana-simple-json-datasource'
     links:
       - influxdb
     volumes:
-    - /share/CACHEDEV1_DATA/docker/grafana/data:/var/lib/grafana
+    - ${SERV_ROOT}/grafana/data:/var/lib/grafana
+    - ${SERV_ROOT}/grafana/etc:/etc/grafana
 
-  gogs:
+  git:
     restart: always
     image: gogs/gogs:latest
     container_name: git
     ports:
       - "4022:22"
-      - "4000:3000"
+        # - "4000:3000"
     volumes:
-      - /share/CACHEDEV1_DATA/docker/gogs:/data
+      - ${SERV_ROOT}/gogs:/data
     environment:
       USERMAP_UID: 501
       USERMAP_GID: 501
       GOGS_APP_NAME: 'Dépots Git'
       GOGS_OFFLINE_MODE: 'true'
       GOGS_DOMAIN: 'gpio.fr'
-      GOGS_ROOT_URL: 'http://127.0.0.1:4000/'
+      GOGS_ROOT_URL: 'http://127.0.0.1/git'
       
       #GOGS_MAIL_ENABLED: 'true'
       #GOGS_MAIL_HOST: 'smtp.example.com:25'
